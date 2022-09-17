@@ -1265,10 +1265,16 @@ and gen_value ctx e =
 
 and gen_tbinop ctx op e1 e2 =
     (match op, e1.eexpr, e2.eexpr with
-     | Ast.OpAssign, TField(e3, FInstance _), TFunction f ->
+     | Ast.OpAssign, TField(e3, FInstance(_, _, class_field)), TFunction f ->
          gen_expr ctx e1;
          spr ctx " = " ;
-         print ctx "function(%s) " (String.concat "," ("self" :: List.map ident (List.map arg_name f.tf_args)));
+         let fn_args = List.map ident (List.map arg_name f.tf_args) in
+         print ctx "function(%s) " (String.concat "," (match class_field.cf_kind with
+         | Var _ ->
+             fn_args
+         | Method _ ->
+             "self" :: fn_args
+         ));
          let fblock = fun_block ctx f e1.epos in
          (match fblock.eexpr with
           | TBlock el ->
