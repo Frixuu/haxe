@@ -392,6 +392,12 @@
 		"params": ["cost"]
 	},
 	{
+		"name": "LuaRuntimeV2",
+		"define": "lua.runtime-v2-experimental",
+		"doc": "Use new, experimental runtime when generating Lua files.",
+		"platforms": ["lua"]
+	},
+	{
 		"name": "LuaJit",
 		"define": "lua-jit",
 		"doc": "Enable the jit compiler for lua (version 5.2 only).",

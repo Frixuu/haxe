@@ -46,6 +46,7 @@ type ctx = {
     mutable type_accessor : module_type -> string;
     mutable separator : bool;
     mutable found_expose : bool;
+    mutable lua_runtime_v2 : bool;
     mutable lua_jit : bool;
     mutable lua_vanilla : bool;
     mutable lua_ver : float;
@@ -1875,6 +1876,7 @@ let alloc_ctx com =
         type_accessor = (fun _ -> Globals.die "" __LOC__);
         separator = false;
         found_expose = false;
+        lua_runtime_v2 = Common.defined com Define.LuaRuntimeV2;
         lua_jit = Common.defined com Define.LuaJit;
         lua_vanilla = Common.defined com Define.LuaVanilla;
         lua_ver = try
@@ -1975,17 +1977,29 @@ let generate com =
         print ctx "%s\n" file_content;
     in
 
-    (* base table-to-array helpers and metatables *)
-    print_file (Common.find_file com "lua/_lua/_hx_tab_array.lua");
+    if ctx.lua_runtime_v2 then (
+        print_file (Common.find_file com "lua/_lua_v2/_init.lua");
+        print_file (Common.find_file com "lua/_lua_v2/_classes.lua");
+        print_file (Common.find_file com "lua/_lua_v2/_utils.lua");
 
-    (* base lua "toString" functionality for haxe objects*)
-    print_file (Common.find_file com "lua/_lua/_hx_tostring.lua");
+        (* temp *)
+        print_file (Common.find_file com "lua/_lua/_hx_tab_array.lua");
+        print_file (Common.find_file com "lua/_lua/_hx_tostring.lua");
+        print_file (Common.find_file com "lua/_lua/_hx_anon.lua");
+        print_file (Common.find_file com "lua/_lua/_hx_classes.lua");
+    ) else (
+        (* base table-to-array helpers and metatables *)
+        print_file (Common.find_file com "lua/_lua/_hx_tab_array.lua");
 
-    (* base lua metatables for prototypes, inheritance, etc. *)
-    print_file (Common.find_file com "lua/_lua/_hx_anon.lua");
+        (* base lua "toString" functionality for haxe objects*)
+        print_file (Common.find_file com "lua/_lua/_hx_tostring.lua");
 
-    (* base runtime class stubs for haxe value types (Int, Float, etc) *)
-    print_file (Common.find_file com "lua/_lua/_hx_classes.lua");
+        (* base lua metatables for prototypes, inheritance, etc. *)
+        print_file (Common.find_file com "lua/_lua/_hx_anon.lua");
+
+        (* base runtime class stubs for haxe value types (Int, Float, etc) *)
+        print_file (Common.find_file com "lua/_lua/_hx_classes.lua");
+    );
 
     let include_files = List.rev com.include_files in
     List.iter (fun file ->

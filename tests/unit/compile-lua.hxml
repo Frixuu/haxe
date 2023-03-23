@@ -1,3 +1,4 @@
 compile-each.hxml
 --main unit.TestMain
+--define lua.runtime_v2_experimental
 -lua bin/unit.lua
