@@ -2209,12 +2209,19 @@ let generate com =
                 }
             in
             gen_value ctx { e with eexpr = TFunction fn; etype = TFun ([],com.basic.tvoid) };
-        spr ctx ", _hx_error)";
+
+        if ctx.lua_runtime_v2 then (
+            spr ctx ", _hx.error)";
+        ) else (
+            spr ctx ", _hx_error)";
+        );
         newline ctx
     ) com.main;
 
-    if anyExposed then
+    if anyExposed then (
         println ctx "return _hx_exports";
+        newline ctx;
+    );
 
     let ch = open_out_bin com.file in
     output_string ch (Buffer.contents ctx.buf);
