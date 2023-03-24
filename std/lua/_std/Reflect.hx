@@ -30,26 +30,34 @@ import lua.Boot;
 			false;
 		} else if (Lua.type(o) == "string" && (untyped String.prototype[field] != null || field == "length")) {
 			true;
-		} else
+		} else {
+			#if lua.runtime_v2_experimental
+			final fields = RuntimeReflect.fields[o];
+			if (fields != null) {
+				fields[untyped field] != null;
+			} else {
+				untyped o[field] != null;
+			}
+			#else
 			untyped o.__fields__ != null ? o.__fields__[field] != null : o[field] != null;
+			#end
+		};
 	}
 
-	public static function field(o:Dynamic, field:String):Dynamic
-		untyped {
-			if (Lua.type(o) == "string") {
-				if (field == "length") {
-					return cast(o : String).length;
-				} else
-					return untyped String.prototype[field];
-			} else {
-				return try o[field] catch (e:Dynamic) null;
-			}
+	public static function field(o:Dynamic, field:String):Dynamic untyped {
+		if (Lua.type(o) == "string") {
+			if (field == "length") {
+				return cast(o : String).length;
+			} else
+				return untyped String.prototype[field];
+		} else {
+			return try o[field] catch (e:Dynamic) null;
 		}
+	}
 
-	public inline static function setField(o:Dynamic, field:String, value:Dynamic):Void
-		untyped {
-			o[field] = value;
-		}
+	public inline static function setField(o:Dynamic, field:String, value:Dynamic):Void untyped {
+		o[field] = value;
+	}
 
 	public static function getProperty(o:Dynamic, field:String):Dynamic {
 		return if (o == null) {
@@ -61,15 +69,14 @@ import lua.Boot;
 		}
 	}
 
-	public static function setProperty(o:Dynamic, field:String, value:Dynamic):Void
-		untyped {
-			if (o.__properties__ != null && o.__properties__["set_" + field]) {
-				var tmp:String = o.__properties__["set_" + field];
-				callMethod(o, Reflect.field(o, tmp), [value]);
-			} else {
-				o[field] = __define_feature__("Reflect.setProperty", value);
-			}
+	public static function setProperty(o:Dynamic, field:String, value:Dynamic):Void untyped {
+		if (o.__properties__ != null && o.__properties__["set_" + field]) {
+			var tmp:String = o.__properties__["set_" + field];
+			callMethod(o, Reflect.field(o, tmp), [value]);
+		} else {
+			o[field] = __define_feature__("Reflect.setProperty", value);
 		}
+	}
 
 	public static function callMethod(o:Dynamic, func:haxe.Constraints.Function, args:Array<Dynamic>):Dynamic {
 		if (args == null || args.length == 0) {
@@ -114,27 +121,29 @@ import lua.Boot;
 		return f1 == f2;
 	}
 
-	public static function isObject(v:Dynamic):Bool
-		untyped {
-			if (v == null)
-				return false;
-			var t = lua.Lua.type(v);
-			return (t == "string" || (t == "table" && v.__enum__ == null))
-				|| (t == "function" && (lua.Boot.isClass(v) || lua.Boot.isEnum(v)) != null);
-		}
+	public static function isObject(v:Dynamic):Bool untyped {
+		if (v == null)
+			return false;
+		var t = lua.Lua.type(v);
+		return (t == "string" || (t == "table" && v.__enum__ == null))
+			|| (t == "function" && (lua.Boot.isClass(v) || lua.Boot.isEnum(v)) != null);
+	}
 
 	public static function isEnumValue(v:Dynamic):Bool {
 		return v != null && Std.isOfType(v, lua.Table) && v.__enum__ != null;
 	}
 
-	public static function deleteField(o:Dynamic, field:String):Bool
-		untyped {
-			if (!hasField(o, field))
-				return false;
-			o[field] = null;
-			o.__fields__[field] = null;
-			return true;
-		}
+	public static function deleteField(o:Dynamic, field:String):Bool untyped {
+		if (!hasField(o, field))
+			return false;
+		o[field] = null;
+		#if lua.runtime_v2_experimental
+		RuntimeReflect.fields[o][field] = null;
+		#else
+		o.__fields__[field] = null;
+		#end
+		return true;
+	}
 
 	public static function copy<T>(o:Null<T>):Null<T> {
 		if (o == null)
@@ -166,3 +175,12 @@ import lua.Boot;
 		end");
 	}
 }
+
+#if lua.runtime_v2_experimental
+@:dox(hide)
+@:native("_hx_reflect")
+extern class RuntimeReflect {
+	@:native("fields")
+	static var fields:lua.Table<Dynamic, Null<lua.Table<String, Bool>>>;
+}
+#end

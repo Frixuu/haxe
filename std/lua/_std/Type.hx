@@ -36,24 +36,21 @@ enum ValueType {
 }
 
 @:coreApi class Type {
-	public static function getClass<T>(o:T):Class<T>
-		untyped {
-			if (o == null)
-				return null;
-			return lua.Boot.getClass(o);
-		}
+	public static function getClass<T>(o:T):Class<T> untyped {
+		if (o == null)
+			return null;
+		return lua.Boot.getClass(o);
+	}
 
-	public static function getEnum(o:EnumValue):Enum<Dynamic>
-		untyped {
-			if (o == null)
-				return null;
-			return o.__enum__;
-		}
+	public static function getEnum(o:EnumValue):Enum<Dynamic> untyped {
+		if (o == null)
+			return null;
+		return o.__enum__;
+	}
 
-	public static function getSuperClass(c:Class<Dynamic>):Class<Dynamic>
-		untyped {
-			return c.__super__;
-		}
+	public static function getSuperClass(c:Class<Dynamic>):Class<Dynamic> untyped {
+		return c.__super__;
+	}
 
 	public static inline function getClassName(c:Class<Dynamic>):String {
 		return untyped __define_feature__("Type.getClassName", c.__name__);
@@ -65,37 +62,41 @@ enum ValueType {
 		return untyped e.__ename__;
 	}
 
-	public static function resolveClass(name:String):Class<Dynamic>
-		untyped {
-			// TODO: better tmp name for _hxClasses
-			var cl:Class<Dynamic> = _hxClasses[name];
-			// ensure that this is a class
-			if (cl == null || !lua.Boot.isClass(cl))
-				return null;
-			return cl;
-		}
+	public static function resolveClass(name:String):Class<Dynamic> untyped {
+		#if lua.runtime_v2_experimental
+		var cl:Class<Dynamic> = _hx_classes_by_name[name];
+		#else
+		// TODO: better tmp name for _hxClasses
+		var cl:Class<Dynamic> = _hxClasses[name];
+		#end
+		// ensure that this is a class
+		if (cl == null || !lua.Boot.isClass(cl))
+			return null;
+		return cl;
+	}
 
-	public static function resolveEnum(name:String):Enum<Dynamic>
-		untyped {
-			// TODO: better tmp name for _hxClasses
-			var e:Dynamic = _hxClasses[name];
-			// ensure that this is an enum
-			if (e == null || !lua.Boot.isEnum(e))
-				return null;
-			return e;
-		}
+	public static function resolveEnum(name:String):Enum<Dynamic> untyped {
+		#if lua.runtime_v2_experimental
+		var e:Dynamic = _hx_classes_by_name[name];
+		#else
+		// TODO: better tmp name for _hxClasses
+		var e:Dynamic = _hxClasses[name];
+		#end
+		// ensure that this is an enum
+		if (e == null || !lua.Boot.isEnum(e))
+			return null;
+		return e;
+	}
 
-	public static function createInstance<T>(cl:Class<T>, args:Array<Dynamic>):T
-		untyped {
-			return __new__(cl, lua.TableTools.unpack(cast args, 0));
-		}
+	public static function createInstance<T>(cl:Class<T>, args:Array<Dynamic>):T untyped {
+		return __new__(cl, lua.TableTools.unpack(cast args, 0));
+	}
 
-	public static function createEmptyInstance<T>(cl:Class<T>):T
-		untyped {
-			var ret = __lua_table__();
-			Lua.setmetatable(ret, untyped {__index: cl.prototype});
-			return ret;
-		}
+	public static function createEmptyInstance<T>(cl:Class<T>):T untyped {
+		var ret = __lua_table__();
+		Lua.setmetatable(ret, untyped {__index: cl.prototype});
+		return ret;
+	}
 
 	public static function createEnum<T>(e:Enum<T>, constr:String, ?params:Array<Dynamic>):T {
 		var f:Dynamic = Reflect.field(e, constr);
@@ -183,24 +184,23 @@ enum ValueType {
 		}
 	}
 
-	public static function enumEq<T>(a:T, b:T):Bool
-		untyped {
-			if (a == b)
-				return true;
-			try {
-				if (a[0] != b[0])
-					return false;
-				for (i in 2...a.length)
-					if (!enumEq(a[i], b[i]))
-						return false;
-				var e = a.__enum__;
-				if (e != b.__enum__ || e == null)
-					return false;
-			} catch (e:Dynamic) {
-				return false;
-			}
+	public static function enumEq<T>(a:T, b:T):Bool untyped {
+		if (a == b)
 			return true;
+		try {
+			if (a[0] != b[0])
+				return false;
+			for (i in 2...a.length)
+				if (!enumEq(a[i], b[i]))
+					return false;
+			var e = a.__enum__;
+			if (e != b.__enum__ || e == null)
+				return false;
+		} catch (e:Dynamic) {
+			return false;
 		}
+		return true;
+	}
 
 	public inline static function enumConstructor(e:EnumValue):String {
 		return untyped e[0];

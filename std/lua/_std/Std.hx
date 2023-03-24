@@ -44,8 +44,12 @@ import lua.NativeStringTools;
 	}
 
 	@:keep
-	public static function string(s:Dynamic) : String {
+	public static function string(s:Dynamic):String {
+		#if lua.runtime_v2_experimental
+		return lua.Boot.RuntimeUtils.toString(s, 0);
+		#else
 		return untyped _hx_tostring(s, 0);
+		#end
 	}
 
 	public static function int(x:Float):Int {
@@ -97,10 +101,13 @@ import lua.NativeStringTools;
 		return untyped x <= 0 ? 0 : Math.floor(Math.random() * x);
 	}
 
-	static function __init__():Void
-		untyped {
-			__feature__("lua.Boot.isClass", String.__name__ = __feature__("Type.getClassName", "String", true));
-			__feature__("Type.resolveClass", _hxClasses["Array"] = Array);
-			__feature__("lua.Boot.isClass", Array.__name__ = __feature__("Type.getClassName", "Array", true));
-		}
+	static function __init__():Void untyped {
+		__feature__("lua.Boot.isClass", String.__name__ = __feature__("Type.getClassName", "String", true));
+		#if lua.runtime_v2_experimental
+		__feature__("Type.resolveClass", _hx_classes_by_name["Array"] = Array);
+		#else
+		__feature__("Type.resolveClass", _hxClasses["Array"] = Array);
+		#end
+		__feature__("lua.Boot.isClass", Array.__name__ = __feature__("Type.getClassName", "Array", true));
+	}
 }

@@ -323,6 +323,12 @@ class Boot {
 @:native("_hx_utils")
 extern class RuntimeUtils {
 	@:native("clamp")
-	static function clamp(x:Any):Any;
+	static function clamp(x:Dynamic):Dynamic;
+	@:native("print_class")
+	static function printClass(obj:Dynamic, depth:Int):String;
+	@:native("print_enum")
+	static function printEnum(obj:Dynamic, depth:Int):String;
+	@:native("tostring")
+	static function toString(obj:Dynamic, depth:Int):String;
 }
 #end

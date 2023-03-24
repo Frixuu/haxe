@@ -1599,7 +1599,6 @@ let gen_class_field ctx c f =
              gen_value ctx e;
              newline ctx;
         )
-
 let generate_class___name__ ctx c =
     if has_feature ctx "lua.Boot.isClass" then begin
         let p = s_path ctx c.cl_path in
@@ -1617,7 +1616,6 @@ let generate_class ctx c =
      | [],"Function" -> typing_error "This class redefines a native one" c.cl_pos
      | _ -> ());
     let p = s_path ctx c.cl_path in
-    let hxClasses = has_feature ctx "Type.resolveClass" in
     newline ctx;
     print ctx "%s.new = " p;
     (match c.cl_kind with
@@ -1662,7 +1660,17 @@ let generate_class ctx c =
 
     (match (get_exposed ctx (dot_path c.cl_path) c.cl_meta) with [s] -> (print ctx "_hx_exports%s = %s" (path_to_brackets s) p; newline ctx) | _ -> ());
 
-    if hxClasses then println ctx "_hxClasses[\"%s\"] = %s" (dot_path c.cl_path) p;
+    (* If reflection is used,
+       we need to be able to lookup the class via its full, non-mangled name *)
+    let can_resolve_class_by_name = has_feature ctx "Type.resolveClass" in
+    if can_resolve_class_by_name then (
+        if ctx.lua_runtime_v2 then (
+            println ctx "_hx_classes_by_name[\"%s\"] = %s" (dot_path c.cl_path) p
+        ) else (
+            println ctx "_hxClasses[\"%s\"] = %s" (dot_path c.cl_path) p
+        );
+    );
+    
     generate_class___name__ ctx c;
     (match c.cl_implements with
      | [] -> ()
@@ -1714,32 +1722,56 @@ let generate_class ctx c =
         );
     end
 
-let generate_enum ctx e =
+    let generate_enum ctx e =
     let p = s_path ctx e.e_path in
     let ename = List.map s_escape_lua (fst e.e_path @ [snd e.e_path]) in
 
-    (* TODO: Unify the _hxClasses declaration *)
-    if has_feature ctx "Type.resolveEnum" then begin
-        print ctx "_hxClasses[\"%s\"] = %s" (dot_path e.e_path) p; semicolon ctx; newline ctx;
-    end;
-    if has_feature ctx "lua.Boot.isEnum" then begin
-        print ctx "_hxClasses[\"%s\"] = {" (dot_path e.e_path);
-        if has_feature ctx "lua.Boot.isEnum" then  begin
-            print ctx " __ename__ = %s," (if has_feature ctx "Type.getEnumName" then "\"" ^ String.concat "." ename ^ "\"" else "true");
+    if ctx.lua_runtime_v2 then (
+        if has_feature ctx "lua.Boot.isEnum" then (
+            print ctx "%s = {" p;
+            if has_feature ctx "Type.getEnumName" then (
+                print ctx " __ename__ = %s," ("\"" ^ String.concat "." ename ^ "\"")
+            ) else (
+                spr ctx " __ename__ = true,"
+            );
+            spr ctx " __constructs__ = _hx_tab_array({";
+            if ((List.length e.e_names) > 0) then begin
+                spr ctx "[0]=";
+                spr ctx (String.concat "," (List.map (fun s -> Printf.sprintf "\"%s\"" s) e.e_names));
+            end;
+            println ctx "},%i)}" (List.length e.e_names);
+        ) else (
+            println ctx "%s = {}" p;
+        );
+        if has_feature ctx "Type.resolveEnum" || has_feature ctx "lua.Boot.isEnum" then (
+            println ctx "_hx_classes_by_name[\"%s\"] = %s" (dot_path e.e_path) p;
+        );
+    ) else (
+        (* TODO: Unify the _hxClasses declaration *)
+        if has_feature ctx "Type.resolveEnum" then begin
+            print ctx "_hxClasses[\"%s\"] = %s" (dot_path e.e_path) p;
+            semicolon ctx;
+            newline ctx;
         end;
-        (* TODO :  Come up with a helper function for _hx_tab_array declarations *)
-        spr ctx " __constructs__ = _hx_tab_array({";
-        if ((List.length e.e_names) > 0) then begin
-            spr ctx "[0]=";
-            spr ctx (String.concat "," (List.map (fun s -> Printf.sprintf "\"%s\"" s) e.e_names));
+        if has_feature ctx "lua.Boot.isEnum" then begin
+            print ctx "_hxClasses[\"%s\"] = {" (dot_path e.e_path);
+            if has_feature ctx "lua.Boot.isEnum" then  begin
+                print ctx " __ename__ = %s," (if has_feature ctx "Type.getEnumName" then "\"" ^ String.concat "." ename ^ "\"" else "true");
+            end;
+            (* TODO :  Come up with a helper function for _hx_tab_array declarations *)
+            spr ctx " __constructs__ = _hx_tab_array({";
+            if ((List.length e.e_names) > 0) then begin
+                spr ctx "[0]=";
+                spr ctx (String.concat "," (List.map (fun s -> Printf.sprintf "\"%s\"" s) e.e_names));
+            end;
+            print ctx "},%i)}" (List.length e.e_names);
+            ctx.separator <- true;
+            newline ctx;
         end;
-        print ctx "},%i)}" (List.length e.e_names);
-        ctx.separator <- true;
-        newline ctx;
-    end;
 
-    if has_feature ctx "Type.resolveEnum" || has_feature ctx "lua.Boot.isEnum" then
-        print ctx "%s = _hxClasses[\"%s\"];" p (dot_path e.e_path);
+        if has_feature ctx "Type.resolveEnum" || has_feature ctx "lua.Boot.isEnum" then
+            print ctx "%s = _hxClasses[\"%s\"];" p (dot_path e.e_path);
+    );
 
     newline ctx;
     List.iter (fun n ->
@@ -1979,16 +2011,12 @@ let generate com =
 
     if ctx.lua_runtime_v2 then (
         print_file (Common.find_file com "lua/_lua_v2/_init.lua");
-        print_file (Common.find_file com "lua/_lua_v2/_classes.lua");
 
-        print_file (Common.find_file com "lua/_lua_v2/_utils.lua");
+        print_file (Common.find_file com "lua/_lua_v2/_error.lua");
+        print_file (Common.find_file com "lua/_lua_v2/_types.lua");
         print_file (Common.find_file com "lua/_lua_v2/_utils_clamp.lua");
-
-        (* temp *)
-        print_file (Common.find_file com "lua/_lua/_hx_tab_array.lua");
-        print_file (Common.find_file com "lua/_lua/_hx_tostring.lua");
-        print_file (Common.find_file com "lua/_lua/_hx_anon.lua");
-        print_file (Common.find_file com "lua/_lua/_hx_classes.lua");
+        print_file (Common.find_file com "lua/_lua_v2/_utils_array.lua");
+        print_file (Common.find_file com "lua/_lua_v2/_tostring.lua");
     ) else (
         (* base table-to-array helpers and metatables *)
         print_file (Common.find_file com "lua/_lua/_hx_tab_array.lua");
@@ -2093,6 +2121,8 @@ let generate com =
         if has_feature ctx "use._bitop" then (
             print_file (Common.find_file com "lua/_lua_v2/_utils_bitop.lua");
         );
+        (* Array is required, always patch it *)
+        println ctx "_hx_utils.array_mt.__index = Array.prototype";
     ) else (
         (* If bit ops are manually imported include the haxe wrapper for them *)
         if has_feature ctx "use._bitop" then begin
@@ -2101,11 +2131,11 @@ let generate com =
 
         (* integer clamping is always required, and will use bit ops if available *)
         print_file (Common.find_file com "lua/_lua/_hx_bit_clamp.lua");
-    );
 
-    (* Array is required, always patch it *)
-    println ctx "_hx_array_mt.__index = Array.prototype";
-    newline ctx;
+        (* Array is required, always patch it *)
+        println ctx "_hx_array_mt.__index = Array.prototype";
+        newline ctx;
+    );
 
     (* Functions to support auto-run of libuv loop *)
     print_file (Common.find_file com "lua/_lua/_hx_luv.lua");
