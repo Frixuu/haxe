@@ -25,7 +25,11 @@ package lua;
 /**
 	Externs for the "bit" class that is required for Haxe lua
 **/
+#if lua.runtime_v2_experimental
+@:native("_hx_utils.bitop")
+#else
 @:native("_hx_bit")
+#end
 extern class Bit {
 	static function bnot(x:Float):Int;
 	static function band(a:Float, b:Float):Int;

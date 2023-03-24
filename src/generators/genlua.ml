@@ -940,7 +940,7 @@ and gen_expr ?(local=true) ctx e = begin
         gen_value ctx e;
     | TUnop (NegBits,unop_flag,e) ->
         add_feature ctx "use._bitop";
-        spr ctx "_hx_bit.bnot(";
+        spr ctx (if ctx.lua_runtime_v2 then "_hx_utils.bitop.bnot(" else "_hx_bit.bnot(");
         gen_value ctx e;
         spr ctx ")";
     | TUnop (Spread,Prefix,e) ->
@@ -1450,7 +1450,7 @@ and gen_paren_tbinop ctx e =
 
 and gen_bitop ctx op e1 e2 =
     add_feature ctx "use._bitop";
-    print ctx "_hx_bit.%s(" (match op with
+    print ctx (if ctx.lua_runtime_v2 then "_hx_utils.bitop.%s(" else "_hx_bit.%s(") (match op with
         | Ast.OpXor  ->  "bxor"
         | Ast.OpAnd  ->  "band"
         | Ast.OpShl  ->  "lshift"
@@ -1980,7 +1980,9 @@ let generate com =
     if ctx.lua_runtime_v2 then (
         print_file (Common.find_file com "lua/_lua_v2/_init.lua");
         print_file (Common.find_file com "lua/_lua_v2/_classes.lua");
+
         print_file (Common.find_file com "lua/_lua_v2/_utils.lua");
+        print_file (Common.find_file com "lua/_lua_v2/_utils_clamp.lua");
 
         (* temp *)
         print_file (Common.find_file com "lua/_lua/_hx_tab_array.lua");
@@ -2087,13 +2089,19 @@ let generate com =
     List.iter (transform_multireturn ctx) com.types;
     List.iter (generate_type ctx) com.types;
 
-    (* If bit ops are manually imported include the haxe wrapper for them *)
-    if has_feature ctx "use._bitop" then begin
-        print_file (Common.find_file com "lua/_lua/_hx_bit.lua");
-    end;
+    if ctx.lua_runtime_v2 then (
+        if has_feature ctx "use._bitop" then (
+            print_file (Common.find_file com "lua/_lua_v2/_utils_bitop.lua");
+        );
+    ) else (
+        (* If bit ops are manually imported include the haxe wrapper for them *)
+        if has_feature ctx "use._bitop" then begin
+            print_file (Common.find_file com "lua/_lua/_hx_bit.lua");
+        end;
 
-    (* integer clamping is always required, and will use bit ops if available *)
-    print_file (Common.find_file com "lua/_lua/_hx_bit_clamp.lua");
+        (* integer clamping is always required, and will use bit ops if available *)
+        print_file (Common.find_file com "lua/_lua/_hx_bit_clamp.lua");
+    );
 
     (* Array is required, always patch it *)
     println ctx "_hx_array_mt.__index = Array.prototype";

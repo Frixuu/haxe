@@ -33,13 +33,13 @@ class Boot {
 	static var Max_Int32 = 2147483647;
 	static var Min_Int32 = -2147483648;
 
-
 	// A max stack size to respect for unpack operations
 	public static var MAXSTACKSIZE(default, null) = 1000;
 
 	public static var platformBigEndian = NativeStringTools.byte(NativeStringTools.dump(function() {}), 7) > 0;
 
-	static var hiddenFields:Table<String, Bool> = untyped __lua__("{__id__=true, hx__closures=true, super=true, prototype=true, __fields__=true, __ifields__=true, __class__=true, __properties__=true}");
+	static var hiddenFields:Table<String,
+		Bool> = untyped __lua__("{__id__=true, hx__closures=true, super=true, prototype=true, __fields__=true, __ifields__=true, __class__=true, __properties__=true}");
 
 	static function __unhtml(s:String)
 		return s.split("&").join("&amp;").split("<").join("&lt;").split(">").join("&gt;");
@@ -152,7 +152,6 @@ class Boot {
 			throw "Cannot cast " + Std.string(o) + " to " + Std.string(t);
 	}
 
-
 	/**
 		Define an array from the given table
 	**/
@@ -196,7 +195,11 @@ class Boot {
 		A 32 bit clamp function for numbers
 	**/
 	public inline static function clampInt32(x:Float) {
-        return untyped _hx_bit_clamp(x);
+		#if lua.runtime_v2_experimental
+		return untyped RuntimeUtils.clamp(x);
+		#else
+		return untyped _hx_bit_clamp(x);
+		#end
 	}
 
 	/**
@@ -214,7 +217,8 @@ class Boot {
 				var k = s.split(" ");
 				var y = k[0].split("-");
 				var t = k[1].split(":");
-				return new std.Date(Lua.tonumber(y[0]), Lua.tonumber(y[1]) - 1, Lua.tonumber(y[2]), Lua.tonumber(t[0]), Lua.tonumber(t[1]), Lua.tonumber(t[2]));
+				return new std.Date(Lua.tonumber(y[0]), Lua.tonumber(y[1]) - 1, Lua.tonumber(y[2]), Lua.tonumber(t[0]), Lua.tonumber(t[1]),
+					Lua.tonumber(t[2]));
 			default:
 				throw "Invalid date format : " + s;
 		}
@@ -270,9 +274,10 @@ class Boot {
 		}
 	}
 
-	static var os_patterns(get,default):Map<String,Array<String>>;
-	static function get_os_patterns():Map<String,Array<String>> {
-		if(os_patterns == null) {
+	static var os_patterns(get, default):Map<String, Array<String>>;
+
+	static function get_os_patterns():Map<String, Array<String>> {
+		if (os_patterns == null) {
 			os_patterns = [
 				'Windows' => ['windows', '^mingw', '^cygwin'],
 				'Linux' => ['linux'],
@@ -312,3 +317,12 @@ class Boot {
 		return null;
 	}
 }
+
+#if lua.runtime_v2_experimental
+@:dox(hide)
+@:native("_hx_utils")
+extern class RuntimeUtils {
+	@:native("clamp")
+	static function clamp(x:Any):Any;
+}
+#end
