@@ -35,6 +35,9 @@ import lua.Boot;
 			final fields = RuntimeReflect.fields[o];
 			if (fields != null) {
 				fields[untyped field] != null;
+			} else if (untyped o.__fields__ != null) {
+				// Can happen if created e.g. by hxluasimdjson
+				untyped o.__fields__[field] != null;
 			} else {
 				untyped o[field] != null;
 			}

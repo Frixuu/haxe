@@ -8,6 +8,9 @@ do
   }
   _hx_utils.array_mt = array_mt
 
+  -- hxluasimdjson requires this to be a global
+  _G._hx_array_mt = array_mt
+
   _hx_utils.is_array = function(o)
     return type(o) == "table" and getmetatable(o) == array_mt and o.__enum__ == nil
   end
@@ -24,6 +27,9 @@ do
     local fields_info = fields[obj]
     if fields_info ~= nil then
       obj = fields_info
+    elseif obj.__fields__ ~= nil then
+      -- Can happen if object is created e.g. in hxluasimdjson
+      obj = obj.__fields__
     end
     for k, _ in pairs(obj) do
       if _hx_hidden[k] == nil then
