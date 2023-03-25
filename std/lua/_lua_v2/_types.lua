@@ -21,6 +21,11 @@ do
     return setmetatable(o, obj_mt)
   end
 
+  local existing_with_fields_into_obj = function(o, f)
+    fields[o] = f
+    return setmetatable(o, obj_mt)
+  end
+
   local new_obj = function()
     local o = {}
     fields[o] = {}
@@ -38,12 +43,14 @@ do
   end
 
   _hx_reflect.existing_into_obj = existing_into_obj
+  _hx_reflect.existing_with_fields_into_obj = existing_with_fields_into_obj
   _hx_reflect.new_obj = new_obj
   _hx_reflect.new_from_prototype = new_from_prototype
 end
 
 local _hx_e = _hx_reflect.new_obj
 local _hx_o = _hx_reflect.existing_into_obj
+local _hx_o2 = _hx_reflect.existing_with_fields_into_obj
 local _hx_new = _hx_reflect.new_from_prototype
 
 local Int = _hx_e();
