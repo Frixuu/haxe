@@ -964,11 +964,19 @@ and gen_expr ?(local=true) ctx e = begin
         spr ctx "_hx_e()";
         ctx.separator <- true
     | TObjectDecl fields ->
-        spr ctx "_hx_o2({";
-        concat ctx "," (fun ((f,_,_),e) -> print ctx "%s=" (anon_field f); gen_anon_value ctx e) fields;
-        spr ctx "},{";
-        concat ctx "," (fun ((f,_,_),e) -> print ctx "%s=" (anon_field f); spr ctx "true") fields;
-        spr ctx "})";
+        if ctx.lua_runtime_v2 then (
+            spr ctx "_hx_o2({";
+            concat ctx "," (fun ((f,_,_),e) -> print ctx "%s=" (anon_field f); gen_anon_value ctx e) fields;
+            spr ctx "},{";
+            concat ctx "," (fun ((f,_,_),e) -> print ctx "%s=" (anon_field f); spr ctx "true") fields;
+            spr ctx "})";
+        ) else (
+            spr ctx "_hx_o({__fields__={";
+            concat ctx "," (fun ((f,_,_),e) -> print ctx "%s=" (anon_field f); spr ctx "true") fields;
+            spr ctx "},";
+            concat ctx "," (fun ((f,_,_),e) -> print ctx "%s=" (anon_field f); gen_anon_value ctx e) fields;
+            spr ctx "})";
+        );
         ctx.separator <- true
     | TFor (v,it,e2) ->
         unsupported e.epos;
