@@ -22,22 +22,17 @@
 
 package sys.net;
 
-/**
-	Represents an Internet Protocol (IP) address.
-**/
-@:using(sys.net.IpAddress.IpAddressTools)
-enum IpAddress {
-	V4(addr:Ipv4Address);
-	V6(addr:Ipv6Address);
-}
+import haxe.Exception;
+import haxe.PosInfos;
 
-private final class IpAddressTools {
-	public static function toString(ip:IpAddress):String {
-		return switch (ip) {
-			case V4(addr):
-				addr.toString();
-			case V6(addr):
-				addr.toString();
-		}
+/**
+	This exception is thrown when domain name resolution unexpectedly fails.
+**/
+class DnsException extends Exception {
+	/**
+		Creates a new instance of `DnsException`.
+	**/
+	public function new(message:String, ?previous:Exception) {
+		super(message, previous);
 	}
 }

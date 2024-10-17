@@ -193,9 +193,9 @@ class Socket {
 		if (a == null) {
 			return null;
 		}
-		var h = new Host("127.0.0.1");
-		@:privateAccess h.addresses = [V4(cast a[0])];
-		return {host: h, port: a[1]};
+		final host = new Host("127.0.0.1");
+		@:privateAccess host.addresses = [Ipv4Address.fromNetworkOrderInt(cast a[0])];
+		return {host: host, port: a[1]};
 	}
 
 	public function host():{host:Host, port:Int} {
@@ -203,9 +203,9 @@ class Socket {
 		if (a == null) {
 			return null;
 		}
-		var h = new Host("127.0.0.1");
-		@:privateAccess h.addresses = [V4(cast a[0])];
-		return {host: h, port: a[1]};
+		final host = new Host("127.0.0.1");
+		@:privateAccess host.addresses = [Ipv4Address.fromNetworkOrderInt(cast a[0])];
+		return {host: host, port: a[1]};
 	}
 
 	public function setTimeout(timeout:Float):Void {

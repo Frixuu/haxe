@@ -22,8 +22,8 @@
 
 package sys.net;
 
-import haxe.io.Error;
 import eval.vm.NativeSocket;
+import haxe.io.Error;
 
 private class SocketOutput extends haxe.io.Output {
 	var socket:NativeSocket;
@@ -158,7 +158,7 @@ class Socket {
 	public function peer():{host:Host, port:Int} {
 		var info = socket.peer();
 		var host:Host = Type.createEmptyInstance(Host);
-		host.init(info.ip);
+		@:privateAccess host.addresses = [Ipv4Address.fromNetworkOrderInt(info.ip)];
 		return {host: host, port: info.port};
 	}
 
@@ -166,7 +166,7 @@ class Socket {
 	public function host():{host:Host, port:Int} {
 		var info = socket.host();
 		var host:Host = Type.createEmptyInstance(Host);
-		host.init(info.ip);
+		@:privateAccess host.addresses = [Ipv4Address.fromNetworkOrderInt(info.ip)];
 		return {host: host, port: info.port};
 	}
 

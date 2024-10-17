@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2005-2019 Haxe Foundation
+ * Copyright (C)2005-2024 Haxe Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -22,26 +22,33 @@
 
 package sys.net;
 
-class Host {
-	public var host(default, null):String;
-	public var ip(default, null):Int;
-
-	var name:String;
-
-	public function new(name:String):Void {
-		host = name;
-		this.name = name;
+@:coreApi
+final class Dns {
+	public static function resolveSync(name:String):Array<IpAddress> {
+		try {
+			final ipv4 = resolveSyncIpv4Impl(name);
+			return [@:privateAccess Ipv4Address.fromNetworkOrderInt(ipv4)];
+		} catch (_) {
+			return [];
+		}
 	}
 
-	public function toString():String {
-		return name;
+	public static function reverseSync(address:IpAddress):Array<String> {
+		return switch (address) {
+			case V4(ipv4):
+				[reverseSyncIpv4Impl(@:privateAccess ipv4.asNetworkOrderInt())];
+			case _:
+				throw new UnsupportedFamilyException("Eval cannot reverse lookup IPv6 addresses");
+		}
 	}
 
-	public function reverse():String {
-		return "";
+	public static function getLocalHostname():String {
+		return getLocalHostnameImpl();
 	}
 
-	public static function localhost():String {
-		return "";
-	}
+	private static extern function resolveSyncIpv4Impl(name:String):Int;
+
+	private static extern function reverseSyncIpv4Impl(ip:Int):String;
+
+	private static extern function getLocalHostnameImpl():String;
 }

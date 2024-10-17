@@ -1,5 +1,5 @@
 /*
- * Copyright (C)2005-2019 Haxe Foundation
+ * Copyright (C)2005-2024 Haxe Foundation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -25,52 +25,43 @@ package sys.net;
 import cpp.NativeSocket;
 
 @:coreApi
-class Host {
-	public var host(default, null):String;
-
-	public var ip(get, never):Int;
-
-	private var ipv6(default, null):haxe.io.BytesData;
-
-	public var addresses(default, null):Array<IpAddress>;
-
-	public function new(name:String):Void {
-		host = name;
-		this.addresses = [];
-		try {
-			final ip = NativeSocket.host_resolve(name);
-			this.addresses.push(V4(cast ip));
-		} catch (e:Dynamic) {
-			final ipv6 = NativeSocket.host_resolve_ipv6(name);
-			throw new UnsupportedFamilyException("ipv6 support currently disabled");
-		}
-	}
-
-	@:noDoc @:noCompletion
-	private function get_ip():Int {
-		for (addr in this.addresses) {
-			switch (addr) {
-				case V4(ip):
-					return cast ip;
-				case _:
-			}
-		}
-		throw new UnsupportedFamilyException("This host does not support IPv4");
-	}
-
-	public function toString():String {
-		return ipv6 == null ? NativeSocket.host_to_string(ip) : NativeSocket.host_to_string_ipv6(ipv6);
-	}
-
-	public function reverse():String {
-		return ipv6 == null ? NativeSocket.host_reverse(ip) : NativeSocket.host_reverse_ipv6(ipv6);
-	}
-
-	public static function localhost():String {
-		return NativeSocket.host_local();
-	}
-
-	static function __init__():Void {
+final class Dns {
+	private static function __init__():Void {
 		NativeSocket.socket_init();
+	}
+
+	public static function resolveSync(name:String):Array<IpAddress> {
+		final addresses:Array<IpAddress> = [];
+		try {
+			final ipv4 = NativeSocket.host_resolve(name);
+			addresses.push(@:privateAccess Ipv4Address.fromNetworkOrderInt(ipv4));
+		} catch (_) {
+			// Host not found, ignore
+		}
+		try {
+			final ipv6 = NativeSocket.host_resolve_ipv6(name);
+			addresses.push(@:privateAccess Ipv6Address.fromNetworkOrderBytes(ipv6));
+		} catch (_) {
+			// Host not found, ignore
+		}
+		return addresses;
+	}
+
+	public static function reverseSync(address:IpAddress):Array<String> {
+		final name = switch (address) {
+			case V4(ipv4):
+				NativeSocket.host_reverse(@:privateAccess ipv4.asNetworkOrderInt());
+			case V6(ipv6):
+				NativeSocket.host_reverse_ipv6(@:privateAccess ipv6.asNetworkOrderBytes());
+		}
+		return if (name != null && name != "") {
+			[name];
+		} else {
+			[];
+		};
+	}
+
+	public static function getLocalHostname():String {
+		return NativeSocket.host_local();
 	}
 }

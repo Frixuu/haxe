@@ -1379,7 +1379,7 @@ module StdGc = struct
 	let stat = vfun0 (fun () -> encode_stats (Gc.stat()))
 end
 
-module StdHost = struct
+module StdDns = struct
 	let int32_addr h =
 		let base = Int32.to_int (Int32.logand h 0xFFFFFFl) in
 		let str = Printf.sprintf "%ld.%d.%d.%d" (Int32.shift_right_logical h 24) (base lsr 16) ((base lsr 8) land 0xFF) (base land 0xFF) in
@@ -1392,11 +1392,6 @@ module StdHost = struct
 	let hostReverse = vfun1 (fun ip ->
 		let ip = decode_i32 ip in
 		try create_unknown (catch_unix_error Unix.gethostbyaddr (int32_addr ip)).h_name with Not_found -> exc_string "Could not reverse host"
-	)
-
-	let hostToString = vfun1 (fun ip ->
-		let ip = decode_i32 ip in
-		create_unknown (catch_unix_error Unix.string_of_inet_addr (int32_addr ip))
 	)
 
 	let resolve = vfun1 (fun name ->
@@ -2040,7 +2035,7 @@ module StdSocket = struct
 		let this = this vthis in
 		let host = decode_i32 host in
 		let port = decode_int port in
-		catch_unix_error Unix.bind this (ADDR_INET (StdHost.int32_addr host,port));
+		catch_unix_error Unix.bind this (ADDR_INET (StdDns.int32_addr host, port));
 		vnull
 	)
 
@@ -2053,7 +2048,7 @@ module StdSocket = struct
 		let this = this vthis in
 		let host = decode_i32 host in
 		let port = decode_int port in
-		catch_unix_error (Unix.connect this) (ADDR_INET (StdHost.int32_addr host,port));
+		catch_unix_error (Unix.connect this) (ADDR_INET (StdDns.int32_addr host, port));
 		vnull
 	)
 
@@ -3553,11 +3548,10 @@ let init_standard_library builtins =
 		"set",StdGc.set;
 		"stat",StdGc.stat;
 	] [];
-	init_fields builtins (["sys";"net"],"Host") [
-		"localhost",StdHost.localhost;
-		"hostReverse",StdHost.hostReverse;
-		"hostToString",StdHost.hostToString;
-		"resolve",StdHost.resolve;
+	init_fields builtins (["sys";"net"],"Dns") [
+		"getLocalHostnameImpl", StdDns.localhost;
+		"reverseSyncIpv4Impl", StdDns.hostReverse;
+		"resolveSyncIpv4Impl", StdDns.resolve;
 	] [];
 	init_fields builtins (["sys";"thread"],"Lock") [] [
 		"release",StdLock.release;

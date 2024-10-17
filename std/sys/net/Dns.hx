@@ -23,21 +23,34 @@
 package sys.net;
 
 /**
-	Represents an Internet Protocol (IP) address.
+	Provides domain name resolution tools.
 **/
-@:using(sys.net.IpAddress.IpAddressTools)
-enum IpAddress {
-	V4(addr:Ipv4Address);
-	V6(addr:Ipv6Address);
-}
+extern class Dns {
+	/**
+		Tries to resolve the IP addresses for the given hostname.
 
-private final class IpAddressTools {
-	public static function toString(ip:IpAddress):String {
-		return switch (ip) {
-			case V4(addr):
-				addr.toString();
-			case V6(addr):
-				addr.toString();
-		}
-	}
+		This call is blocking.
+		This operation may or may not retrieve from any caches, including the operating system one.
+
+		@param name The host name to resolve.
+		@return An unsorted array of IP addresses. Can be empty if the host could not be resolved.
+	**/
+	static function resolveSync(name:String):Array<IpAddress>;
+
+	/**
+		Tries to run a reverse DNS lookup on the given IP address.
+
+		This call is blocking.
+		This operation may or may not retrieve from any caches, including the operating system one.
+
+		@param address The IPv4 or IPv6 address to reverse lookup.
+		@return An unsorted array of hostnames pointing to the given address.
+		Can be empty if the address could not be resolved.
+	**/
+	static function reverseSync(address:IpAddress):Array<String>;
+
+	/**
+		Returns the hostname (computer name, etc.) of the machine running the current process.
+	**/
+	static function getLocalHostname():String;
 }
