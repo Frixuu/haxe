@@ -176,6 +176,7 @@ class Socket {
 	}
 
 	public function bind(host:Host, port:Int):Void {
+		trace('NEKO: binding $host to port $port');
 		socket_bind(__s, host.ip, port);
 	}
 

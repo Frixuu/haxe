@@ -22,12 +22,11 @@
 
 package sys.net;
 
-import lua.lib.luasocket.Socket as LuaSocket;
-import lua.lib.luasocket.socket.*;
-import lua.*;
-
 import haxe.io.Bytes;
 import haxe.io.Error;
+import lua.*;
+import lua.lib.luasocket.Socket as LuaSocket;
+import lua.lib.luasocket.socket.*;
 
 class Socket {
 	public var input(default, null):haxe.io.Input;
@@ -89,6 +88,7 @@ class Socket {
 	}
 
 	public function bind(host:Host, port:Int):Void {
+		trace('LUA: binding $host to port $port');
 		var res = LuaSocket.bind(host.host, port);
 		if (res.message != null)
 			throw 'Socket Bind Error : ${res.message}';

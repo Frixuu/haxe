@@ -22,10 +22,10 @@
 
 package sys.net;
 
-import haxe.io.Error;
 import cpp.NativeSocket;
 import cpp.NativeString;
 import cpp.Pointer;
+import haxe.io.Error;
 
 private class SocketInput extends haxe.io.Input {
 	var __s:Dynamic;
@@ -200,6 +200,7 @@ class Socket {
 	}
 
 	public function bind(host:Host, port:Int):Void {
+		trace('CPP: binding $host to port $port');
 		if (host.ip == 0 && host.host != "0.0.0.0") {
 			var ipv6:haxe.io.BytesData = Reflect.field(host, "ipv6");
 			if (ipv6 != null) {
@@ -266,8 +267,11 @@ class Socket {
 		var neko_array = NativeSocket.socket_select(read, write, others, timeout);
 		if (neko_array == null)
 			throw "Select error";
-		return @:fixed {
-			read:neko_array[0], write:neko_array[1], others:neko_array[2]
-		};
+		return @:fixed
+			{
+				read: neko_array[0],
+				write: neko_array[1],
+				others: neko_array[2]
+			};
 	}
 }

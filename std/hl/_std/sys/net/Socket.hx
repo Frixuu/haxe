@@ -168,6 +168,7 @@ class Socket {
 	}
 
 	public function bind(host:Host, port:Int):Void {
+		trace('HL: binding $host to port $port');
 		if (!socket_bind(__s, host.ip, port))
 			throw new Sys.SysError("Cannot bind socket on " + host + ":" + port);
 	}

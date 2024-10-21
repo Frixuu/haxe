@@ -94,6 +94,7 @@ class Socket {
 	}
 
 	public function bind(host:Host, port:Int):Void {
+		trace('JAVA: binding $host to port $port');
 		if (boundAddr != null) {
 			if (server.isBound())
 				throw "Already bound";
