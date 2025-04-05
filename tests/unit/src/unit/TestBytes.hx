@@ -144,4 +144,21 @@ class TestBytes extends Test {
 			eq(b.toHex(),bhx.toHex());
 		}
 	}
+
+	function testEmpty() {
+
+		final b = haxe.io.Bytes.empty();
+		eq(0, b.length);
+		eq(0, b.compare(b.sub(0, 0)));
+		eq("", b.toString());
+		eq("", b.toHex());
+
+		exc(() -> b.set(0, 0));
+		exc(() -> b.set(1, 1));
+		exc(() -> b.fill(0, 0, 1));
+		exc(() -> b.blit(0, b, 0, 0));
+		
+		exc(() -> b.get(0));
+		exc(() -> fget(b.getData(), 0));
+	}
 }

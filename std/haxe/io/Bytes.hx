@@ -27,6 +27,8 @@ using cpp.NativeArray;
 #end
 
 class Bytes {
+	private static final _EMPTY:Bytes = Bytes.alloc(0);
+
 	public var length(default, null):Int;
 
 	var b:BytesData;
@@ -671,5 +673,12 @@ class Bytes {
 		#else
 		return b[pos];
 		#end
+	}
+
+	/**
+		Returns an empty `Bytes` instance.
+	**/
+	public inline static function empty():Bytes {
+		return _EMPTY;
 	}
 }
