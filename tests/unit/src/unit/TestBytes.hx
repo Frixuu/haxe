@@ -155,8 +155,8 @@ class TestBytes extends Test {
 
 		exc(() -> b.set(0, 0));
 		exc(() -> b.set(1, 1));
-		exc(() -> b.fill(0, 0, 1));
-		exc(() -> b.blit(0, b, 0, 0));
+		exc(() -> b.fill(0, 1, 1));
+		exc(() -> b.blit(0, b, 0, 1));
 		
 		exc(() -> b.get(0));
 		exc(() -> fget(b.getData(), 0));

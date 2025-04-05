@@ -24,6 +24,8 @@ package haxe.io;
 
 @:coreApi
 class Bytes {
+	private static final _EMPTY:Bytes = Bytes.alloc(0);
+
 	public var length(default, null):Int;
 
 	var b:js.lib.Uint8Array;
@@ -268,5 +270,9 @@ class Bytes {
 	public inline static function fastGet(b:BytesData, pos:Int):Int {
 		// this requires that we have wrapped it with haxe.io.Bytes beforehand
 		return untyped b.bytes[pos];
+	}
+
+	public inline static function empty():Bytes {
+		return _EMPTY;
 	}
 }

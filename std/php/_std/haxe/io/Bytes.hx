@@ -26,6 +26,8 @@ import php.Global;
 import php.Syntax;
 
 class Bytes {
+	private static final _EMPTY:Bytes = Bytes.alloc(0);
+
 	public var length(default, null):Int;
 
 	var b:BytesData;
@@ -165,5 +167,9 @@ class Bytes {
 
 	public inline static function fastGet(b:BytesData, pos:Int):Int {
 		return b.get(pos);
+	}
+
+	public inline static function empty():Bytes {
+		return _EMPTY;
 	}
 }
