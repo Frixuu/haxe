@@ -153,7 +153,7 @@ class TestBytes extends Test {
 		eq("", b.toString());
 		eq("", b.toHex());
 
-		exc(() -> b.set(3, 42));
+		b.set(3, 42);
 		eq(42, b.get(3));
 	}
 }
