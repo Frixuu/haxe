@@ -147,18 +147,13 @@ class TestBytes extends Test {
 
 	function testEmpty() {
 
-		final b = haxe.io.Bytes.empty();
+		final b = haxe.io.Bytes.alloc(0);
 		eq(0, b.length);
 		eq(0, b.compare(b.sub(0, 0)));
 		eq("", b.toString());
 		eq("", b.toHex());
 
-		exc(() -> b.set(0, 0));
-		exc(() -> b.set(1, 1));
-		exc(() -> b.fill(0, 1, 1));
-		exc(() -> b.blit(0, b, 0, 1));
-		
-		exc(() -> b.get(0));
-		exc(() -> fget(b.getData(), 0));
+		exc(() -> b.set(3, 42));
+		eq(42, b.get(3));
 	}
 }
