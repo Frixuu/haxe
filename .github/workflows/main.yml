@@ -428,7 +428,7 @@ jobs:
       - uses: actions/setup-node@v4
         if: matrix.target == 'js'
         with:
-          node-version: 18.17.1
+          node-version: 22.22.2
 
       # - name: Quick test
       #   shell: pwsh
