@@ -45,12 +45,17 @@ class Js {
 		getJSDependencies();
 
 		final jsOutputs = [
-			for (es_ver in    [[], ["-D", "js-es=6"]])
-			for (unflatten in [[], ["-D", "js-unflatten"]])
-			for (classic in   [[], ["-D", "js-classic"]])
+			for (es_ver in           [[], ["-D", "js-es=6"], ["-D", "js-es=2023" /* the newest Node v20 supports */]])
+			for (unflatten in        [[], ["-D", "js-unflatten"]])
+			for (moduleType in       [[], ["-D", "js.module=es"], ["-D", "js.module=classic"]])
 			for (enums_as_objects in [[], ["-D", "js-enums-as-arrays"]])
 			{
-				final extras = args.concat(es_ver).concat(unflatten).concat(classic).concat(enums_as_objects);
+				// Skip ESM tests for ES5
+				if (es_ver.length == 0 && moduleType.length == 2 && moduleType[1].endsWith("es")) {
+					continue;
+				}
+
+				final extras = args.concat(es_ver).concat(unflatten).concat(moduleType).concat(enums_as_objects);
 
 				runCommand("haxe", ["compile-js.hxml"].concat(extras));
 
